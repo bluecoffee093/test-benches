@@ -7,6 +7,10 @@
 #define _3A 3
 #define _3B 2
 
+#define DIR 8
+#define BRAKE 9
+#define FLOATING 10
+
 const int ipH1 = 18;
 const int ipH2 = 19;
 const int ipH3 = 20;
@@ -14,6 +18,9 @@ const int ipH3 = 20;
 volatile int sH1 = LOW;
 volatile int sH2 = LOW;
 volatile int sH3 = LOW;
+int dir = 1;
+int brake =0;
+int floating = 0;
 
 char buff[50];
 
@@ -21,6 +28,9 @@ char buff[50];
 void setup() {
   // put your setup code here, to run once:
   //Serial.begin (9600);
+  pinMode (DIR, INPUT_PULLUP);
+  pinMode (BRAKE, INPUT_PULLUP);
+  pinMode(FLOATING, INPUT_PULLUP);
   pinMode (_1A, OUTPUT);
   pinMode (_1B, OUTPUT);
 
@@ -43,13 +53,16 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ipH3), intHall3, CHANGE);
 }
 
-void loop() {
-  int _1a = (!sH1)&sH2;
-  int _1b = (!sH1)|sH2;
-  int _2a = (!sH2)&sH3;
-  int _2b = (!sH2)|sH3;
-  int _3a = (!sH3)&sH1;
-  int _3b = (!sH3)|sH1;
+void loop() { 
+  dir = digitalRead(DIR);
+  brake = digitalRead(BRAKE);
+  floating = digitalRead(FLOATING);
+  int _1a = (((!dir&sH1&(!sH2))|(dir&(!sH1)&sH2))|brake)&(!floating);
+  int _1b = ((((dir)|(!sH2)|sH1)&((!dir)|(!sH1)|sH2))|brake)|floating;
+  int _2a = (((!dir&sH2&(!sH3))|(dir&(!sH2)&sH3))|brake)&(!floating);
+  int _2b = ((((dir)|(!sH3)|sH2)&((!dir)|(!sH2)|sH3))|brake)|floating;
+  int _3a = (((!dir&sH3&(!sH1))|(dir&(!sH3)&sH1))|brake)&(!floating);
+  int _3b = ((((dir)|(!sH1)|sH3)&((!dir)|(!sH3)|sH1))|brake)|floating;
 
   int val = analogRead(A0);
   analogWrite(_1A,_1a ? val/4: 0);
